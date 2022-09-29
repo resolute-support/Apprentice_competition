@@ -75,14 +75,13 @@ enum MotorDir {
     Forward = 0,
     Back = 1
 }
+
+let x: DIR;
+let Mspeed: number;
+
 //% color="#ff6800" icon="\uf1b9" weight=15
 //% groups="['Motor', 'RGB-led', 'Neo-pixel', 'Sensor', 'Tone']"
 namespace K_Bit {
-    /**
-    * constants for the mars challenge
-    */
-    let speed = 100;
-    let violations= 0;
     /**
      * used to control PCA9685
      */
@@ -161,6 +160,9 @@ namespace K_Bit {
     //% group="Motor" weight=99
 
     export function run(direction: DIR, speed: number) {
+        x = direction;
+        Mspeed = speed;
+
         if (!PCA9685_Initialized) {
             init_PCA9685();
         }
@@ -211,7 +213,7 @@ namespace K_Bit {
     //% block="$M motor run $MD speed: $speed \\%"
     //% speed.min=0 speed.max=100
     //% group="Motor" weight=97
-    export function Motor(M: MotorObs, MD: MotorDir) {
+    export function Motor(M: MotorObs, MD: MotorDir, speed: number) {
         if (!PCA9685_Initialized) {
             init_PCA9685();
         }
@@ -263,9 +265,6 @@ namespace K_Bit {
     //% br.min=0 br.max=255
     //% group="RGB-led" weight=79
     export function LED_brightness(br: number) {
-        if (!PCA9685_Initialized) {
-            init_PCA9685();
-        }
         L_brightness = Math.map(br, 0, 255, 4095, 0);
     }
     /**
@@ -435,13 +434,6 @@ namespace K_Bit {
     export function PH(): number {
         return pins.analogReadPin(AnalogPin.P1);
     }
-
-    function windHit(): void {
-        input.onSound(DetectedSound.Loud, function () {
-            speed +- 2;
-
-        })
-    }
 }
 
 //% color="#ff6800" weight=10 icon="\uf1eb"
@@ -599,5 +591,25 @@ namespace irRemote {
     //% group="Motor" weight=98
     export function competiton() {
        
+    }
+}
+
+/**
+ * Custom blocks
+ */
+//% weight=100 color=#0fbc11 icon=""
+namespace mars {
+    /**
+     * loud sound will act as wind hitting rover which will
+     * decrease the speed, change LED brightness and change LED
+     * to red
+     */
+    //%block
+    export function windHit(): void {
+        input.onSound(DetectedSound.Loud, function () {
+            K_Bit.run(x, Mspeed-2);
+            K_Bit.LED_brightness(255);
+            K_Bit.Led(COLOR.red)
+        })
     }
 }
